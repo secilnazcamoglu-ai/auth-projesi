@@ -24,3 +24,13 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.register-input::placeholder {
+  color: #374151;
+  opacity: 1;
+}
+
+.login-input::placeholder {
+  color: #6b7280;
+  opacity: 1;
+}
