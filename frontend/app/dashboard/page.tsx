@@ -23,9 +23,9 @@ export default function DashboardPage() {
     const token = localStorage.getItem("token");
 
     // Eğer token yoksa kullanıcı giriş yapmamış demektir
-    if (!token) {
-      setMessage("Bu sayfayı görmek için giriş yapmalısınız.");
-      return;
+   if (!token) {
+    router.push("/login");
+    return;
     }
 
     // Token varsa kullanıcı profil bilgilerini backend'den getiriyoruz

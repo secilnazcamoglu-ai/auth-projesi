@@ -1,8 +1,13 @@
 "use client";
 
-// React'ten useState'i alıyoruz.
-// Formdaki input değerlerini tutmak için kullanacağız.
+// Formdaki bilgileri tutmak için useState kullanıyoruz
 import { useState } from "react";
+
+// Kayıt başarılı olunca login sayfasına yönlendirmek için kullanıyoruz
+import { useRouter } from "next/navigation";
+
+// Sayfalar arasında link vermek için kullanıyoruz
+import Link from "next/link";
 
 export default function RegisterPage() {
   // Kullanıcının yazdığı ad bilgisini tutar
@@ -20,6 +25,12 @@ export default function RegisterPage() {
   // Backend'den gelen başarı veya hata mesajını göstermek için kullanılır
   const [message, setMessage] = useState("");
 
+  // Şifrenin görünür/gizli olma durumunu tutar
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Sayfa yönlendirmesi yapmak için kullanılır
+  const router = useRouter();
+
   // Form gönderildiğinde çalışacak fonksiyon
   const handleRegister = async (e: React.FormEvent) => {
     // Sayfanın yenilenmesini engelliyoruz
@@ -30,7 +41,7 @@ export default function RegisterPage() {
       const response = await fetch("http://localhost:5000/api/auth/register", {
         method: "POST",
 
-        // Backend'e JSON veri göndereceğimizi söylüyoruz
+        // Backend'e JSON veri gönderdiğimizi söylüyoruz
         headers: {
           "Content-Type": "application/json",
         },
@@ -50,12 +61,15 @@ export default function RegisterPage() {
       // Backend'den gelen mesajı ekranda göstermek için state'e atıyoruz
       setMessage(data.message);
 
-      // Kayıt başarılıysa formu temizliyoruz
+      // Kayıt başarılıysa formu temizliyoruz ve login sayfasına yönlendiriyoruz
       if (data.success) {
         setFirstName("");
         setLastName("");
         setEmail("");
         setPassword("");
+
+        // Kayıt başarılı olunca kullanıcıyı login sayfasına gönderiyoruz
+        router.push("/login");
       }
     } catch (error) {
       // Backend'e ulaşılamazsa burası çalışır
@@ -95,26 +109,47 @@ export default function RegisterPage() {
           onChange={(e) => setEmail(e.target.value)}
         />
 
-        <input
-          className="register-input"
-          style={styles.input}
-          type="password"
-          placeholder="Şifre"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+        <div style={styles.passwordWrapper}>
+          <input
+            className="register-input"
+             style={styles.passwordInput}
+            type={showPassword ? "text" : "password"}
+            placeholder="Şifre"
+             value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+
+          <button
+            type="button"
+            style={styles.eyeButton}
+            onClick={() => setShowPassword(!showPassword)}
+          >
+          <img
+            src={showPassword ? "/eye.svg" : "/eye-off.svg"}
+            alt={showPassword ? "Şifre görünür" : "Şifre gizli"}
+            style={styles.eyeIcon}
+          />
+          </button>
+        </div>
 
         <button style={styles.button} type="submit">
           Kayıt Ol
         </button>
 
         {message && <p style={styles.message}>{message}</p>}
+
+        <p style={styles.linkText}>
+          Zaten hesabın var mı?{" "}
+          <Link href="/login" style={styles.link}>
+            Giriş Yap
+          </Link>
+        </p>
       </form>
     </main>
   );
 }
 
-// Sayfanın basit görünüm ayarları
+// Sayfanın görünüm ayarları
 const styles = {
   container: {
     minHeight: "100vh",
@@ -123,6 +158,7 @@ const styles = {
     alignItems: "center",
     backgroundColor: "#f3f4f6",
   },
+
   form: {
     width: "350px",
     display: "flex",
@@ -134,21 +170,58 @@ const styles = {
     color: "#111827",
     boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
   },
+
   title: {
     textAlign: "center" as const,
     marginBottom: "10px",
-
-    // Başlıktaki "Kayıt Ol" yazısının rengini belirler
     color: "#111827",
   },
+
   input: {
     padding: "12px",
     borderRadius: "8px",
     border: "1px solid #ccc",
     fontSize: "14px",
-    // Kullanıcının yazdığı yazının rengini belirler
     color: "#111827",
+    backgroundColor: "white",
   },
+
+  passwordWrapper: {
+    width: "100%",
+    display: "flex",
+    alignItems: "center",
+    border: "1px solid #ccc",
+    borderRadius: "8px",
+    backgroundColor: "white",
+    overflow: "hidden",
+  },
+
+  passwordInput: {
+    flex: 1,
+    padding: "12px",
+    border: "none",
+    outline: "none",
+    fontSize: "14px",
+    color: "#111827",
+    backgroundColor: "white",
+  },
+
+  eyeButton: {
+    width: "44px",
+    height: "44px",
+    border: "none",
+    backgroundColor: "white",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+  },
+
+  eyeIcon: {
+    width: "22px",
+    height: "22px",
+  },
+
   button: {
     padding: "12px",
     borderRadius: "8px",
@@ -164,5 +237,18 @@ const styles = {
     marginTop: "10px",
     color: "#111827",
     fontWeight: "500",
+  },
+
+  linkText: {
+    textAlign: "center" as const,
+    marginTop: "8px",
+    color: "#374151",
+    fontSize: "14px",
+  },
+
+  link: {
+    color: "#2563eb",
+    textDecoration: "none",
+    fontWeight: "600",
   },
 };

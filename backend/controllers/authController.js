@@ -10,6 +10,11 @@ const bcrypt = require("bcryptjs");
 // Login başarılı olunca kullanıcıya token vereceğiz.
 const jwt = require("jsonwebtoken");
 
+const sendEmail = require("../utils/sendEmail");
+
+// Şifre sıfırlama tokeni oluşturmak için crypto kullanacağız.
+const crypto = require("crypto");
+
 // Register yani kayıt olma fonksiyonu
 const register = async (req, res) => {
   try {
@@ -171,10 +176,167 @@ const getProfile = async (req, res) => {
   }
 };
 
+
+// Forgot Password yani şifremi unuttum fonksiyonu
+const forgotPassword = async (req, res) => {
+  try {
+    // Kullanıcının gönderdiği email bilgisini alıyoruz
+    const { email } = req.body;
+
+    // Email boş gönderildiyse hata döndürüyoruz
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Lütfen email adresinizi girin.",
+      });
+    }
+
+    // Bu email ile kayıtlı kullanıcı var mı kontrol ediyoruz
+    const user = await User.findOne({ email });
+
+    // Kullanıcı bulunamazsa hata döndürüyoruz
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "Bu email ile kayıtlı kullanıcı bulunamadı.",
+      });
+    }
+
+    // Rastgele reset token oluşturuyoruz
+    const resetToken = crypto.randomBytes(32).toString("hex");
+
+    // Token'ı veritabanına düz haliyle kaydetmiyoruz, hashliyoruz
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+
+    // Hashlenmiş token'ı kullanıcıya kaydediyoruz
+    user.resetPasswordToken = hashedToken;
+
+    // Token 15 dakika geçerli olacak
+    user.resetPasswordExpire = Date.now() + 15 * 60 * 1000;
+
+    // Kullanıcıyı güncelliyoruz
+    await user.save();
+
+    // Frontend reset password linki
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+
+    // Email içeriği
+    const message = `
+      <h2>Şifre Sıfırlama</h2>
+      <p>Şifrenizi sıfırlamak için aşağıdaki bağlantıya tıklayın:</p>
+      <a href="${resetUrl}" target="_blank">${resetUrl}</a>
+      <p>Bu bağlantı 15 dakika geçerlidir.</p>
+    `;
+
+    try {
+      // Email gönderiyoruz
+      await sendEmail({
+        email: user.email,
+        subject: "Şifre Sıfırlama Bağlantısı",
+        message: message,
+      });
+
+      res.status(200).json({
+        success: true,
+        message: "Şifre sıfırlama linki email adresinize gönderildi.",
+      });
+    } catch (error) {
+      // Email gönderilemezse token bilgilerini temizliyoruz
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpire = undefined;
+
+      await user.save();
+
+      return res.status(500).json({
+        success: false,
+        message: "Email gönderilemedi. Lütfen tekrar deneyin.",
+        error: error.message,
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Sunucu hatası oluştu.",
+      error: error.message,
+    });
+  }
+};
+
+// Reset Password yani yeni şifre belirleme fonksiyonu
+const resetPassword = async (req, res) => {
+  try {
+    // URL'den token bilgisini alıyoruz
+    const { token } = req.params;
+
+    // Kullanıcının gönderdiği yeni şifreyi alıyoruz
+    const { password } = req.body;
+
+    // Şifre boş gönderildiyse hata döndürüyoruz
+    if (!password) {
+      return res.status(400).json({
+        success: false,
+        message: "Lütfen yeni şifrenizi girin.",
+      });
+    }
+
+    // URL'den gelen token'ı hashliyoruz
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(token)
+      .digest("hex");
+
+    // Token doğru mu ve süresi dolmamış mı kontrol ediyoruz
+    const user = await User.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpire: { $gt: Date.now() },
+    });
+
+    // Kullanıcı bulunamazsa token geçersiz veya süresi dolmuş demektir
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "Token geçersiz veya süresi dolmuş.",
+      });
+    }
+
+    // Yeni şifreyi hashliyoruz
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Kullanıcının şifresini güncelliyoruz
+    user.password = hashedPassword;
+
+    // Reset token bilgilerini temizliyoruz
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+
+    // Kullanıcıyı kaydediyoruz
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Şifre başarıyla güncellendi.",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Sunucu hatası oluştu.",
+      error: error.message,
+    });
+  }
+};
+
+
+
+
 // register fonksiyonunu dışarı aktarıyoruz.
 // Böylece authRoutes.js bu fonksiyonu kullanabilir.
 module.exports = {
   register,
   login,
   getProfile,
+  forgotPassword,
+  resetPassword,
 };
