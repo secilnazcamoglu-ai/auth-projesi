@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 // Sayfalar arasında link vermek için kullanıyoruz
 import Link from "next/link";
 
+// Sayfa açılırken animasyon vermek için motion kullanıyoruz
 import { motion } from "motion/react";
 
 export default function LoginPage() {
@@ -24,9 +25,13 @@ export default function LoginPage() {
   // Şifrenin görünür/gizli olma durumunu tutar
   const [showPassword, setShowPassword] = useState(false);
 
+  const [isFlipping, setIsFlipping] = useState(false);
+
   // Sayfa yönlendirmesi yapmak için kullanılır
   const router = useRouter();
 
+
+  
   // Form gönderilince çalışacak fonksiyon
   const handleLogin = async (e: React.FormEvent) => {
     // Sayfanın yenilenmesini engelliyoruz
@@ -71,20 +76,24 @@ export default function LoginPage() {
 
   return (
     <main style={styles.container}>
-        <motion.section
-          style={styles.bookCard}
-          initial={{ opacity: 0, scale: 0.92, rotateY: -12 }}
-          animate={{ opacity: 1, scale: 1, rotateY: 0 }}
-          transition={{ duration: 0.7, ease: "easeOut" }}
-  >
-           <div style={styles.leftPage}>
-          <p style={styles.smallText}>Book Club</p>
+      <motion.section
+        style={styles.bookCard}
+        initial={{ opacity: 0, scale: 0.92, rotateY: -10 }}
+        animate={{ opacity: 1, scale: 1, rotateY: 0 }}
+        transition={{ duration: 0.7, ease: "easeOut" }}
+      >
+        {/* Kitabın üstüne sıcak ışık yansıması verir */}
+        <div style={styles.bookLight}></div>
+
+        {/* Sol kitap sayfası */}
+        <div style={styles.leftPage}>
+          <p style={styles.smallText}>Kitap Kulübü</p>
 
           <h1 style={styles.welcomeTitle}>Tekrar Hoş Geldin</h1>
 
           <p style={styles.welcomeText}>
             Okuma yolculuğuna kaldığın yerden devam et. Kitap kulübüne giriş
-            yaparak profil bilgilerine ulaşabilirsin.
+            yaparak profil bilgilerine ulaşabilir ve hesabını yönetebilirsin.
           </p>
 
           <div style={styles.quoteBox}>
@@ -94,8 +103,10 @@ export default function LoginPage() {
           </div>
         </div>
 
+        {/* Kitabın orta katlama çizgisi */}
         <div style={styles.pageDivider}></div>
 
+        {/* Sağ kitap sayfası / giriş formu */}
         <form onSubmit={handleLogin} style={styles.rightPage}>
           <h2 style={styles.title}>Giriş Yap</h2>
 
@@ -158,32 +169,48 @@ export default function LoginPage() {
 // Kitap temalı login sayfası görünüm ayarları
 const styles = {
   container: {
-  minHeight: "100vh",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-  padding: "24px",
-  perspective: "1200px",
-  overflow: "hidden",
-  position: "relative" as const,
+    minHeight: "100vh",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: "24px",
+    perspective: "1200px",
+    overflow: "hidden",
+    position: "relative" as const,
 
-  backgroundImage:
-    "linear-gradient(rgba(15, 9, 5, 0.45), rgba(15, 9, 5, 0.65)), url('/bookshelf-bg.png')",
-  backgroundSize: "cover",
-  backgroundPosition: "center",
-  backgroundRepeat: "no-repeat",
-},
+    // public klasöründeki kitaplık görselini arka plan yapıyoruz
+    backgroundImage:
+      "linear-gradient(rgba(15, 9, 5, 0.45), rgba(15, 9, 5, 0.68)), url('/bookshelf-bg.png')",
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    backgroundRepeat: "no-repeat",
+  },
 
   bookCard: {
     width: "900px",
     minHeight: "520px",
     display: "flex",
     position: "relative" as const,
-    borderRadius: "18px",
+    zIndex: 1,
+    borderRadius: "14px",
     overflow: "hidden",
-    backgroundColor: "#fff8e8",
-    border: "1px solid #d8c3a5",
-    boxShadow: "0 24px 60px rgba(35, 20, 8, 0.35)",
+    backgroundColor: "#eadfc8",
+    border: "1px solid #b9976b",
+    boxShadow: "0 24px 60px rgba(20, 10, 5, 0.45)",
+  },
+
+  bookLight: {
+    position: "absolute" as const,
+    top: "-70px",
+    left: "50%",
+    width: "420px",
+    height: "250px",
+    transform: "translateX(-50%)",
+    background:
+      "radial-gradient(circle, rgba(255, 190, 105, 0.24) 0%, rgba(255, 160, 70, 0.12) 45%, transparent 75%)",
+    filter: "blur(20px)",
+    pointerEvents: "none" as const,
+    zIndex: 2,
   },
 
   leftPage: {
@@ -192,9 +219,11 @@ const styles = {
     display: "flex",
     flexDirection: "column" as const,
     justifyContent: "center",
+    position: "relative" as const,
+    zIndex: 3,
     background:
-      "linear-gradient(90deg, #fff4d8 0%, #fff8e8 80%, #efe0c4 100%)",
-    color: "#3b2415",
+      "linear-gradient(90deg, #e8dcc3 0%, #efe3cb 78%, #dcc8a6 100%)",
+    color: "#3f2b1d",
   },
 
   rightPage: {
@@ -204,9 +233,11 @@ const styles = {
     flexDirection: "column" as const,
     justifyContent: "center",
     gap: "14px",
+    position: "relative" as const,
+    zIndex: 3,
     background:
-      "linear-gradient(90deg, #efe0c4 0%, #fff8e8 12%, #fffaf0 100%)",
-    color: "#3b2415",
+      "linear-gradient(90deg, #dcc8a6 0%, #efe3cb 12%, #f3ead7 100%)",
+    color: "#3f2b1d",
   },
 
   pageDivider: {
@@ -214,65 +245,69 @@ const styles = {
     top: "0",
     bottom: "0",
     left: "50%",
-    width: "14px",
+    width: "18px",
     transform: "translateX(-50%)",
     background:
-      "linear-gradient(90deg, rgba(120,80,40,0.2), rgba(255,255,255,0.7), rgba(120,80,40,0.2))",
-    boxShadow: "inset 0 0 16px rgba(80, 50, 20, 0.25)",
-    zIndex: 1,
+      "linear-gradient(90deg, rgba(120, 84, 48, 0.38), rgba(248, 238, 214, 0.92), rgba(120, 84, 48, 0.38))",
+    boxShadow: "inset 0 0 18px rgba(70, 40, 15, 0.28)",
+    zIndex: 4,
   },
 
   smallText: {
     fontSize: "14px",
-    letterSpacing: "2px",
+    letterSpacing: "3px",
     textTransform: "uppercase" as const,
-    color: "#8b5e34",
+    color: "#8b5d2f",
     fontWeight: "700",
-    marginBottom: "14px",
+    marginBottom: "16px",
   },
 
   welcomeTitle: {
-    fontSize: "42px",
-    lineHeight: "1.1",
-    marginBottom: "18px",
-    color: "#3b2415",
+    fontSize: "44px",
+    lineHeight: "1.15",
+    marginBottom: "20px",
+    color: "#4a2f1d",
+    fontFamily: "Georgia, 'Times New Roman', serif",
   },
 
   welcomeText: {
-    fontSize: "16px",
-    lineHeight: "1.7",
-    color: "#6b4a2f",
+    fontSize: "17px",
+    lineHeight: "1.8",
+    color: "#6a4a31",
     marginBottom: "28px",
   },
 
   quoteBox: {
-    padding: "18px",
-    borderLeft: "4px solid #8b5e34",
-    backgroundColor: "rgba(139, 94, 52, 0.08)",
+    padding: "20px",
+    borderLeft: "4px solid #8b5d2f",
+    backgroundColor: "rgba(120, 84, 48, 0.10)",
     borderRadius: "8px",
+    boxShadow: "inset 0 0 8px rgba(90, 60, 30, 0.06)",
   },
 
   quote: {
     margin: 0,
-    color: "#5c3d2e",
+    color: "#5f4028",
     fontStyle: "italic",
-    lineHeight: "1.6",
+    lineHeight: "1.8",
+    fontSize: "16px",
   },
 
   title: {
     textAlign: "center" as const,
-    marginBottom: "12px",
-    color: "#3b2415",
-    fontSize: "28px",
+    marginBottom: "14px",
+    color: "#4a2f1d",
+    fontSize: "30px",
+    fontFamily: "Georgia, 'Times New Roman', serif",
   },
 
   input: {
     padding: "14px",
     borderRadius: "8px",
-    border: "1px solid #c7ad86",
+    border: "1px solid #b99972",
     fontSize: "15px",
     color: "#3b2415",
-    backgroundColor: "#fffdf7",
+    backgroundColor: "#f3ead8",
     outline: "none",
   },
 
@@ -280,9 +315,9 @@ const styles = {
     width: "100%",
     display: "flex",
     alignItems: "center",
-    border: "1px solid #c7ad86",
+    border: "1px solid #b99972",
     borderRadius: "8px",
-    backgroundColor: "#fffdf7",
+    backgroundColor: "#f3ead8",
     overflow: "hidden",
   },
 
@@ -293,14 +328,14 @@ const styles = {
     outline: "none",
     fontSize: "15px",
     color: "#3b2415",
-    backgroundColor: "#fffdf7",
+    backgroundColor: "#f3ead8",
   },
 
   eyeButton: {
     width: "48px",
     height: "48px",
     border: "none",
-    backgroundColor: "#fffdf7",
+    backgroundColor: "#f3ead8",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -316,12 +351,13 @@ const styles = {
     padding: "14px",
     borderRadius: "8px",
     border: "none",
-    backgroundColor: "#8b5e34",
+    backgroundColor: "#8a6238",
     color: "white",
     fontSize: "17px",
     cursor: "pointer",
     fontWeight: "700",
-    marginTop: "4px",
+    marginTop: "6px",
+    boxShadow: "0 6px 18px rgba(70, 40, 15, 0.22)",
   },
 
   message: {
@@ -340,7 +376,7 @@ const styles = {
   },
 
   link: {
-    color: "#8b5e34",
+    color: "#8a6238",
     textDecoration: "none",
     fontWeight: "800",
   },

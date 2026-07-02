@@ -1,129 +1,164 @@
 "use client";
 
-// Formdaki email bilgisini tutmak için useState kullanıyoruz
+// Form bilgilerini tutmak için useState kullanıyoruz
 import { useState } from "react";
 
-// Login sayfasına link vermek için kullanıyoruz
+// Dashboard sayfasına yönlendirmek için kullanıyoruz
+import { useRouter } from "next/navigation";
+
+// Dashboard'a geri dönmek için Link kullanıyoruz
 import Link from "next/link";
 
-// Sayfa açılırken animasyon vermek için motion kullanıyoruz
-import { motion } from "motion/react";
+// Kitap tipi oluşturuyoruz
+type Book = {
+  title: string;
+  author: string;
+  rating: string;
+  comment: string;
+};
 
-export default function ForgotPasswordPage() {
-  // Kullanıcının yazdığı email bilgisini tutar
-  const [email, setEmail] = useState("");
+export default function AddBookPage() {
+  // Kitap adı
+  const [title, setTitle] = useState("");
 
-  // Backend'den gelen mesajı ekranda göstermek için kullanılır
+  // Yazar adı
+  const [author, setAuthor] = useState("");
+
+  // Kullanıcının verdiği puan
+  const [rating, setRating] = useState("");
+
+  // Kullanıcının kitap hakkındaki yorumu
+  const [comment, setComment] = useState("");
+
+  // Mesaj göstermek için kullanılır
   const [message, setMessage] = useState("");
 
-  // Form gönderilince çalışacak fonksiyon
-  const handleForgotPassword = async (e: React.FormEvent) => {
-    // Sayfanın yenilenmesini engelliyoruz
+  // Sayfa yönlendirmesi için kullanılır
+  const router = useRouter();
+
+  // Kitap ekleme işlemi
+  const handleAddBook = (e: React.FormEvent) => {
     e.preventDefault();
 
-    try {
-      // Backend'e forgot-password isteği gönderiyoruz
-      const response = await fetch(
-        "http://localhost:5000/api/auth/forgot-password",
-        {
-          method: "POST",
-
-          // Backend'e JSON veri gönderdiğimizi söylüyoruz
-          headers: {
-            "Content-Type": "application/json",
-          },
-
-          // Kullanıcının yazdığı emaili backend'e gönderiyoruz
-          body: JSON.stringify({
-            email,
-          }),
-        }
-      );
-
-      // Backend'den gelen cevabı JSON'a çeviriyoruz
-      const data = await response.json();
-
-      // Backend'den gelen mesajı ekranda gösteriyoruz
-      setMessage(data.message);
-
-      // İşlem başarılıysa email inputunu temizliyoruz
-      if (data.success) {
-        setEmail("");
-      }
-    } catch (error) {
-      setMessage("Bir hata oluştu. Backend çalışıyor mu kontrol edin.");
+    // Kitap adı ve yazar boş olmasın diye kontrol ediyoruz
+    if (!title || !author) {
+      setMessage("Lütfen kitap adı ve yazar alanlarını doldurun.");
+      return;
     }
+
+    // Yeni kitap nesnesi oluşturuyoruz
+    const newBook: Book = {
+      title,
+      author,
+      rating,
+      comment,
+    };
+
+    // Daha önce kaydedilen kitapları localStorage'dan alıyoruz
+    const savedBooks = localStorage.getItem("books");
+
+    // Eğer kitap varsa JSON'dan diziye çeviriyoruz, yoksa boş dizi oluşturuyoruz
+    const books: Book[] = savedBooks ? JSON.parse(savedBooks) : [];
+
+    // Yeni kitabı listenin sonuna ekliyoruz
+    books.push(newBook);
+
+    // Güncel kitap listesini localStorage'a kaydediyoruz
+    localStorage.setItem("books", JSON.stringify(books));
+
+    // Formu temizliyoruz
+    setTitle("");
+    setAuthor("");
+    setRating("");
+    setComment("");
+
+    setMessage("Kitap başarıyla kitaplığa eklendi.");
+
+    // Kısa süre sonra dashboard sayfasına geri gönderiyoruz
+    setTimeout(() => {
+      router.push("/dashboard");
+    }, 900);
   };
 
   return (
     <main style={styles.container}>
-      <motion.section
-        style={styles.bookCard}
-        initial={{ opacity: 0, scale: 0.92, rotateY: -10 }}
-        animate={{ opacity: 1, scale: 1, rotateY: 0 }}
-        transition={{ duration: 0.7, ease: "easeOut" }}
-      >
-        {/* Kitabın üstüne sıcak ışık yansıması verir */}
-        <div style={styles.bookLight}></div>
-
+      <section style={styles.bookCard}>
         {/* Sol kitap sayfası */}
         <div style={styles.leftPage}>
           <p style={styles.smallText}>Kitap Kulübü</p>
 
-          <h1 style={styles.welcomeTitle}>Şifreni mi Unuttun?</h1>
+          <h1 style={styles.welcomeTitle}>Yeni Kitap Ekle</h1>
 
           <p style={styles.welcomeText}>
-            Endişelenme. Hesabına kayıtlı email adresini yaz, sana şifreni
-            yenileyebilmen için güvenli bir bağlantı gönderelim.
+            Okuduğun veya okumak istediğin kitabı rafına ekle. Böylece kişisel
+            kitaplığını adım adım oluşturabilirsin.
           </p>
 
           <div style={styles.quoteBox}>
             <p style={styles.quote}>
-              “Kaybolan bir sayfa, doğru işaretle yeniden bulunur.”
+              “Her raf, sahibinin okuma yolculuğundan izler taşır.”
             </p>
           </div>
         </div>
 
-        {/* Kitabın orta katlama çizgisi */}
+        {/* Kitabın orta çizgisi */}
         <div style={styles.pageDivider}></div>
 
-        {/* Sağ kitap sayfası / şifremi unuttum formu */}
-        <form onSubmit={handleForgotPassword} style={styles.rightPage}>
-          <h2 style={styles.title}>Şifre Sıfırlama</h2>
-
-          <p style={styles.description}>
-            Email adresinizi girin. Şifre sıfırlama bağlantısı email adresinize
-            gönderilecektir.
-          </p>
+        {/* Sağ kitap sayfası / kitap ekleme formu */}
+        <form onSubmit={handleAddBook} style={styles.rightPage}>
+          <h2 style={styles.title}>Kitap Bilgileri</h2>
 
           <input
-            className="forgot-input"
             style={styles.input}
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            type="text"
+            placeholder="Kitap adı"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+
+          <input
+            style={styles.input}
+            type="text"
+            placeholder="Yazar adı"
+            value={author}
+            onChange={(e) => setAuthor(e.target.value)}
+          />
+
+          <input
+            style={styles.input}
+            type="number"
+            min="1"
+            max="5"
+            placeholder="Puan 1-5"
+            value={rating}
+            onChange={(e) => setRating(e.target.value)}
+          />
+
+          <textarea
+            style={styles.textarea}
+            placeholder="Kitap hakkındaki yorumun"
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
           />
 
           <button style={styles.button} type="submit">
-            Link Gönder
+            Kitabı Rafıma Ekle
           </button>
 
           {message && <p style={styles.message}>{message}</p>}
 
           <p style={styles.linkText}>
-            Şifreni hatırladın mı?{" "}
-            <Link href="/login" style={styles.link}>
-              Giriş Yap
+            <Link href="/dashboard" style={styles.link}>
+              Dashboard'a dön
             </Link>
           </p>
         </form>
-      </motion.section>
+      </section>
     </main>
   );
 }
 
-// Kitap temalı forgot password sayfası görünüm ayarları
+// Kitap ekleme sayfası görünüm ayarları
 const styles = {
   container: {
     minHeight: "100vh",
@@ -131,9 +166,8 @@ const styles = {
     justifyContent: "center",
     alignItems: "center",
     padding: "24px",
-    perspective: "1200px",
-    overflow: "hidden",
     position: "relative" as const,
+    overflow: "hidden",
 
     backgroundImage:
       "linear-gradient(rgba(15, 9, 5, 0.45), rgba(15, 9, 5, 0.68)), url('/bookshelf-bg.png')",
@@ -144,29 +178,14 @@ const styles = {
 
   bookCard: {
     width: "900px",
-    minHeight: "520px",
+    minHeight: "560px",
     display: "flex",
     position: "relative" as const,
-    zIndex: 1,
     borderRadius: "14px",
     overflow: "hidden",
     backgroundColor: "#eadfc8",
     border: "1px solid #b9976b",
     boxShadow: "0 24px 60px rgba(20, 10, 5, 0.45)",
-  },
-
-  bookLight: {
-    position: "absolute" as const,
-    top: "-70px",
-    left: "50%",
-    width: "420px",
-    height: "250px",
-    transform: "translateX(-50%)",
-    background:
-      "radial-gradient(circle, rgba(255, 190, 105, 0.24) 0%, rgba(255, 160, 70, 0.12) 45%, transparent 75%)",
-    filter: "blur(20px)",
-    pointerEvents: "none" as const,
-    zIndex: 2,
   },
 
   leftPage: {
@@ -175,8 +194,6 @@ const styles = {
     display: "flex",
     flexDirection: "column" as const,
     justifyContent: "center",
-    position: "relative" as const,
-    zIndex: 3,
     background:
       "linear-gradient(90deg, #e8dcc3 0%, #efe3cb 78%, #dcc8a6 100%)",
     color: "#3f2b1d",
@@ -189,8 +206,6 @@ const styles = {
     flexDirection: "column" as const,
     justifyContent: "center",
     gap: "14px",
-    position: "relative" as const,
-    zIndex: 3,
     background:
       "linear-gradient(90deg, #dcc8a6 0%, #efe3cb 12%, #f3ead7 100%)",
     color: "#3f2b1d",
@@ -238,7 +253,6 @@ const styles = {
     borderLeft: "4px solid #8b5d2f",
     backgroundColor: "rgba(120, 84, 48, 0.10)",
     borderRadius: "8px",
-    boxShadow: "inset 0 0 8px rgba(90, 60, 30, 0.06)",
   },
 
   quote: {
@@ -251,18 +265,10 @@ const styles = {
 
   title: {
     textAlign: "center" as const,
-    marginBottom: "6px",
+    marginBottom: "14px",
     color: "#4a2f1d",
     fontSize: "30px",
     fontFamily: "Georgia, 'Times New Roman', serif",
-  },
-
-  description: {
-    textAlign: "center" as const,
-    color: "#6a4a31",
-    fontSize: "15px",
-    lineHeight: "1.6",
-    marginBottom: "8px",
   },
 
   input: {
@@ -273,6 +279,19 @@ const styles = {
     color: "#3b2415",
     backgroundColor: "#f3ead8",
     outline: "none",
+  },
+
+  textarea: {
+    minHeight: "90px",
+    padding: "14px",
+    borderRadius: "8px",
+    border: "1px solid #b99972",
+    fontSize: "15px",
+    color: "#3b2415",
+    backgroundColor: "#f3ead8",
+    outline: "none",
+    resize: "none" as const,
+    fontFamily: "Arial, sans-serif",
   },
 
   button: {
@@ -292,7 +311,7 @@ const styles = {
     textAlign: "center" as const,
     marginTop: "8px",
     color: "#5c3d2e",
-    fontWeight: "600",
+    fontWeight: "700",
   },
 
   linkText: {

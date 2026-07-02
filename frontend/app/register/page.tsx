@@ -9,6 +9,9 @@ import { useRouter } from "next/navigation";
 // Sayfalar arasında link vermek için kullanıyoruz
 import Link from "next/link";
 
+// Sayfa açılırken animasyon vermek için motion kullanıyoruz
+import { motion } from "motion/react";
+
 export default function RegisterPage() {
   // Kullanıcının yazdığı ad bilgisini tutar
   const [firstName, setFirstName] = useState("");
@@ -79,138 +82,278 @@ export default function RegisterPage() {
 
   return (
     <main style={styles.container}>
-      <form onSubmit={handleRegister} style={styles.form}>
-        <h1 style={styles.title}>Kayıt Ol</h1>
+      <motion.section
+        style={styles.bookCard}
+        initial={{ opacity: 0, scale: 0.92, rotateY: -10 }}
+        animate={{ opacity: 1, scale: 1, rotateY: 0 }}
+        transition={{ duration: 0.7, ease: "easeOut" }}
+      >
+        {/* Kitabın üstüne sıcak ışık yansıması verir */}
+        <div style={styles.bookLight}></div>
 
-        <input
-          className="register-input"
-          style={styles.input}
-          type="text"
-          placeholder="Ad"
-          value={firstName}
-          onChange={(e) => setFirstName(e.target.value)}
-        />
+        {/* Sol kitap sayfası */}
+        <div style={styles.leftPage}>
+          <p style={styles.smallText}>Kitap Kulübü</p>
 
-        <input
-          className="register-input"
-          style={styles.input}
-          type="text"
-          placeholder="Soyad"
-          value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
-        />
+          <h1 style={styles.welcomeTitle}>Kulübe Katıl</h1>
 
-        <input
-          className="register-input"
-          style={styles.input}
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+          <p style={styles.welcomeText}>
+            Okuduğun kitapları takip etmek, kitaplara puan vermek ve
+            yorumlarını paylaşmak için Kitap Kulübü hesabını oluştur.
+          </p>
 
-        <div style={styles.passwordWrapper}>
-          <input
-            className="register-input"
-             style={styles.passwordInput}
-            type={showPassword ? "text" : "password"}
-            placeholder="Şifre"
-             value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-
-          <button
-            type="button"
-            style={styles.eyeButton}
-            onClick={() => setShowPassword(!showPassword)}
-          >
-          <img
-            src={showPassword ? "/eye.svg" : "/eye-off.svg"}
-            alt={showPassword ? "Şifre görünür" : "Şifre gizli"}
-            style={styles.eyeIcon}
-          />
-          </button>
+          <div style={styles.quoteBox}>
+            <p style={styles.quote}>
+              “Her yeni üyelik, yeni bir hikâyenin başlangıcıdır.”
+            </p>
+          </div>
         </div>
 
-        <button style={styles.button} type="submit">
-          Kayıt Ol
-        </button>
+        {/* Kitabın orta katlama çizgisi */}
+        <div style={styles.pageDivider}></div>
 
-        {message && <p style={styles.message}>{message}</p>}
+        {/* Sağ kitap sayfası / kayıt formu */}
+        <form onSubmit={handleRegister} style={styles.rightPage}>
+          <h2 style={styles.title}>Kayıt Ol</h2>
 
-        <p style={styles.linkText}>
-          Zaten hesabın var mı?{" "}
-          <Link href="/login" style={styles.link}>
-            Giriş Yap
-          </Link>
-        </p>
-      </form>
+          <input
+            className="register-input"
+            style={styles.input}
+            type="text"
+            placeholder="Ad"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+          />
+
+          <input
+            className="register-input"
+            style={styles.input}
+            type="text"
+            placeholder="Soyad"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+          />
+
+          <input
+            className="register-input"
+            style={styles.input}
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+
+          <div style={styles.passwordWrapper}>
+            <input
+              className="register-input"
+              style={styles.passwordInput}
+              type={showPassword ? "text" : "password"}
+              placeholder="Şifre"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+
+            <button
+              type="button"
+              style={styles.eyeButton}
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              <img
+                src={showPassword ? "/eye.svg" : "/eye-off.svg"}
+                alt={showPassword ? "Şifre görünür" : "Şifre gizli"}
+                style={styles.eyeIcon}
+              />
+            </button>
+          </div>
+
+          <button style={styles.button} type="submit">
+            Kayıt Ol
+          </button>
+
+          {message && <p style={styles.message}>{message}</p>}
+
+          <p style={styles.linkText}>
+            Zaten hesabın var mı?{" "}
+            <Link href="/login" style={styles.link}>
+              Giriş Yap
+            </Link>
+          </p>
+        </form>
+      </motion.section>
     </main>
   );
 }
 
-// Sayfanın görünüm ayarları
+// Kitap temalı register sayfası görünüm ayarları
 const styles = {
   container: {
     minHeight: "100vh",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f3f4f6",
+    padding: "24px",
+    perspective: "1200px",
+    overflow: "hidden",
+    position: "relative" as const,
+
+    // public klasöründeki kitaplık görselini arka plan yapıyoruz
+    backgroundImage:
+      "linear-gradient(rgba(15, 9, 5, 0.45), rgba(15, 9, 5, 0.68)), url('/bookshelf-bg.png')",
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    backgroundRepeat: "no-repeat",
   },
 
-  form: {
-    width: "350px",
+  bookCard: {
+    width: "900px",
+    minHeight: "560px",
+    display: "flex",
+    position: "relative" as const,
+    zIndex: 1,
+    borderRadius: "14px",
+    overflow: "hidden",
+    backgroundColor: "#eadfc8",
+    border: "1px solid #b9976b",
+    boxShadow: "0 24px 60px rgba(20, 10, 5, 0.45)",
+  },
+
+  bookLight: {
+    position: "absolute" as const,
+    top: "-70px",
+    left: "50%",
+    width: "420px",
+    height: "250px",
+    transform: "translateX(-50%)",
+    background:
+      "radial-gradient(circle, rgba(255, 190, 105, 0.24) 0%, rgba(255, 160, 70, 0.12) 45%, transparent 75%)",
+    filter: "blur(20px)",
+    pointerEvents: "none" as const,
+    zIndex: 2,
+  },
+
+  leftPage: {
+    width: "50%",
+    padding: "48px",
     display: "flex",
     flexDirection: "column" as const,
-    gap: "12px",
-    padding: "24px",
-    borderRadius: "12px",
-    backgroundColor: "white",
-    color: "#111827",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+    justifyContent: "center",
+    position: "relative" as const,
+    zIndex: 3,
+    background:
+      "linear-gradient(90deg, #e8dcc3 0%, #efe3cb 78%, #dcc8a6 100%)",
+    color: "#3f2b1d",
+  },
+
+  rightPage: {
+    width: "50%",
+    padding: "48px",
+    display: "flex",
+    flexDirection: "column" as const,
+    justifyContent: "center",
+    gap: "14px",
+    position: "relative" as const,
+    zIndex: 3,
+    background:
+      "linear-gradient(90deg, #dcc8a6 0%, #efe3cb 12%, #f3ead7 100%)",
+    color: "#3f2b1d",
+  },
+
+  pageDivider: {
+    position: "absolute" as const,
+    top: "0",
+    bottom: "0",
+    left: "50%",
+    width: "18px",
+    transform: "translateX(-50%)",
+    background:
+      "linear-gradient(90deg, rgba(120, 84, 48, 0.38), rgba(248, 238, 214, 0.92), rgba(120, 84, 48, 0.38))",
+    boxShadow: "inset 0 0 18px rgba(70, 40, 15, 0.28)",
+    zIndex: 4,
+  },
+
+  smallText: {
+    fontSize: "14px",
+    letterSpacing: "3px",
+    textTransform: "uppercase" as const,
+    color: "#8b5d2f",
+    fontWeight: "700",
+    marginBottom: "16px",
+  },
+
+  welcomeTitle: {
+    fontSize: "44px",
+    lineHeight: "1.15",
+    marginBottom: "20px",
+    color: "#4a2f1d",
+    fontFamily: "Georgia, 'Times New Roman', serif",
+  },
+
+  welcomeText: {
+    fontSize: "17px",
+    lineHeight: "1.8",
+    color: "#6a4a31",
+    marginBottom: "28px",
+  },
+
+  quoteBox: {
+    padding: "20px",
+    borderLeft: "4px solid #8b5d2f",
+    backgroundColor: "rgba(120, 84, 48, 0.10)",
+    borderRadius: "8px",
+    boxShadow: "inset 0 0 8px rgba(90, 60, 30, 0.06)",
+  },
+
+  quote: {
+    margin: 0,
+    color: "#5f4028",
+    fontStyle: "italic",
+    lineHeight: "1.8",
+    fontSize: "16px",
   },
 
   title: {
     textAlign: "center" as const,
-    marginBottom: "10px",
-    color: "#111827",
+    marginBottom: "14px",
+    color: "#4a2f1d",
+    fontSize: "30px",
+    fontFamily: "Georgia, 'Times New Roman', serif",
   },
 
   input: {
-    padding: "12px",
+    padding: "14px",
     borderRadius: "8px",
-    border: "1px solid #ccc",
-    fontSize: "14px",
-    color: "#111827",
-    backgroundColor: "white",
+    border: "1px solid #b99972",
+    fontSize: "15px",
+    color: "#3b2415",
+    backgroundColor: "#f3ead8",
+    outline: "none",
   },
 
   passwordWrapper: {
     width: "100%",
     display: "flex",
     alignItems: "center",
-    border: "1px solid #ccc",
+    border: "1px solid #b99972",
     borderRadius: "8px",
-    backgroundColor: "white",
+    backgroundColor: "#f3ead8",
     overflow: "hidden",
   },
 
   passwordInput: {
     flex: 1,
-    padding: "12px",
+    padding: "14px",
     border: "none",
     outline: "none",
-    fontSize: "14px",
-    color: "#111827",
-    backgroundColor: "white",
+    fontSize: "15px",
+    color: "#3b2415",
+    backgroundColor: "#f3ead8",
   },
 
   eyeButton: {
-    width: "44px",
-    height: "44px",
+    width: "48px",
+    height: "48px",
     border: "none",
-    backgroundColor: "white",
+    backgroundColor: "#f3ead8",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -223,32 +366,36 @@ const styles = {
   },
 
   button: {
-    padding: "12px",
+    padding: "14px",
     borderRadius: "8px",
     border: "none",
-    backgroundColor: "#2563eb",
+    backgroundColor: "#8a6238",
     color: "white",
-    fontSize: "16px",
+    fontSize: "17px",
     cursor: "pointer",
+    fontWeight: "700",
+    marginTop: "6px",
+    boxShadow: "0 6px 18px rgba(70, 40, 15, 0.22)",
   },
 
   message: {
     textAlign: "center" as const,
-    marginTop: "10px",
-    color: "#111827",
-    fontWeight: "500",
+    marginTop: "8px",
+    color: "#5c3d2e",
+    fontWeight: "600",
   },
 
   linkText: {
     textAlign: "center" as const,
-    marginTop: "8px",
-    color: "#374151",
-    fontSize: "14px",
+    marginTop: "6px",
+    marginBottom: "0",
+    color: "#6b4a2f",
+    fontSize: "15px",
   },
 
   link: {
-    color: "#2563eb",
+    color: "#8a6238",
     textDecoration: "none",
-    fontWeight: "600",
+    fontWeight: "800",
   },
 };
