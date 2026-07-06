@@ -214,8 +214,13 @@ const forgotPassword = async (req, res) => {
     // Hashlenmiş token'ı kullanıcıya kaydediyoruz
     user.resetPasswordToken = hashedToken;
 
-    // Token 15 dakika geçerli olacak
-    user.resetPasswordExpire = Date.now() + 15 * 60 * 1000;
+    // Reset linkinin 2 dakika geçerli olmasını sağlıyoruz
+    user.resetPasswordExpire = Date.now() + 2 * 60 * 1000;
+
+    const expireTime = new Date(user.resetPasswordExpire).toLocaleTimeString("tr-TR", {
+  hour: "2-digit",
+  minute: "2-digit",
+});
 
     // Kullanıcıyı güncelliyoruz
     await user.save();
@@ -223,14 +228,150 @@ const forgotPassword = async (req, res) => {
     // Frontend reset password linki
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
 
-    // Email içeriği
     const message = `
-      <h2>Şifre Sıfırlama</h2>
-      <p>Şifrenizi sıfırlamak için aşağıdaki bağlantıya tıklayın:</p>
-      <a href="${resetUrl}" target="_blank">${resetUrl}</a>
-      <p>Bu bağlantı 15 dakika geçerlidir.</p>
-    `;
+  <div style="margin:0; padding:0; background-color:#1f1208; font-family:Arial, sans-serif;">
+    <div style="max-width:620px; margin:0 auto; padding:32px 18px;">
+      
+      <div style="
+        background: linear-gradient(135deg, #eee0c2 0%, #f8eccf 48%, #dac297 100%);
+        border: 1px solid #b9976b;
+        border-radius: 18px;
+        padding: 34px;
+        color: #3f2b1d;
+        box-shadow: 0 18px 40px rgba(0,0,0,0.35);
+      ">
+        
+        <p style="
+          margin:0 0 12px 0;
+          color:#8b5d2f;
+          font-size:13px;
+          font-weight:800;
+          letter-spacing:3px;
+          text-transform:uppercase;
+        ">
+          Kitap Kulübü
+        </p>
 
+        <h1 style="
+          margin:0 0 18px 0;
+          color:#4a2f1d;
+          font-family:Georgia, 'Times New Roman', serif;
+          font-size:34px;
+          line-height:1.2;
+        ">
+          Şifre Yenileme Bağlantısı
+        </h1>
+
+        <p style="
+          margin:0 0 16px 0;
+          color:#5f4028;
+          font-size:16px;
+          line-height:1.7;
+        ">
+          Kitap Kulübü hesabınız için şifre yenileme isteği aldık.
+          Şifrenizi yenilemek için aşağıdaki butona tıklayabilirsiniz.
+        </p>
+
+        <div style="
+          margin:24px 0;
+          padding:18px;
+          border-radius:12px;
+          background-color:rgba(120,84,48,0.10);
+          border:1px solid rgba(139,93,47,0.24);
+        ">
+          <p style="
+            margin:0 0 6px 0;
+            color:#4a2f1d;
+            font-size:16px;
+            font-weight:700;
+          ">
+            Bağlantı geçerlilik süresi
+          </p>
+
+          <p style="
+            margin:0;
+            color:#7a2e1f;
+            font-size:22px;
+            font-weight:900;
+            font-family:Georgia, 'Times New Roman', serif;
+          ">
+            2 dakika
+          </p>
+
+          <p style="
+            margin:8px 0 0 0;
+            color:#6a4a31;
+            font-size:14px;
+          ">
+            Son geçerlilik saati: ${expireTime}
+          </p>
+        </div>
+
+        <a href="${resetUrl}" style="
+          display:block;
+          width:100%;
+          box-sizing:border-box;
+          text-align:center;
+          padding:15px 20px;
+          border-radius:10px;
+          background-color:#8a6238;
+          color:#ffffff;
+          text-decoration:none;
+          font-size:17px;
+          font-weight:800;
+          box-shadow:0 8px 20px rgba(70,40,15,0.22);
+        ">
+          Şifremi Yenile
+        </a>
+
+        <p style="
+          margin:22px 0 0 0;
+          color:#5f4028;
+          font-size:14px;
+          line-height:1.6;
+        ">
+          Eğer bu işlemi siz yapmadıysanız bu e-postayı dikkate almayabilirsiniz.
+        </p>
+
+        <div style="
+          margin-top:26px;
+          padding-top:18px;
+          border-top:1px solid rgba(139,93,47,0.22);
+        ">
+          <p style="
+            margin:0;
+            color:#8b5d2f;
+            font-size:13px;
+            font-weight:800;
+            letter-spacing:2px;
+          ">
+            Kitap Kulübü
+          </p>
+
+          <p style="
+            margin:6px 0 0 0;
+            color:#6a4a31;
+            font-size:13px;
+          ">
+            Okuma yolculuğuna güvenle devam et.
+          </p>
+        </div>
+      </div>
+
+      <p style="
+        margin:18px 0 0 0;
+        color:#d7b98e;
+        font-size:12px;
+        text-align:center;
+        line-height:1.5;
+      ">
+        Buton çalışmazsa aşağıdaki bağlantıyı tarayıcınıza yapıştırabilirsiniz:
+        <br />
+        <span style="color:#f6e6c8;">${resetUrl}</span>
+      </p>
+    </div>
+  </div>
+`;
     try {
       // Email gönderiyoruz
       await sendEmail({

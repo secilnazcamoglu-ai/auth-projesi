@@ -1,27 +1,28 @@
-// Email göndermek için nodemailer paketini kullanıyoruz
 const nodemailer = require("nodemailer");
 
-// Email gönderme fonksiyonu
-const sendEmail = async (options) => {
-  // Gmail SMTP ayarlarını oluşturuyoruz
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
+const sendEmail = async ({ email, subject, message }) => {
+  try {
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
 
-  // Gönderilecek email bilgileri
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
-    to: options.email,
-    subject: options.subject,
-    html: options.message,
-  };
+    const mailOptions = {
+      from: `"Kitap Kulübü" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: subject,
+      html: message,
+      text: "Kitap Kulübü şifre yenileme bağlantısı gönderildi.",
+    };
 
-  // Emaili gönderiyoruz
-  await transporter.sendMail(mailOptions);
+    await transporter.sendMail(mailOptions);
+  } catch (error) {
+    console.log("Email gönderme hatası:", error);
+    throw new Error("Email gönderilemedi.");
+  }
 };
 
 module.exports = sendEmail;
