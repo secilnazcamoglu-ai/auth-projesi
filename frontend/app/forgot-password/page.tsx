@@ -1,7 +1,7 @@
 "use client";
 
-// Formdaki email bilgisini tutmak için useState kullanıyoruz
-import { useState } from "react";
+// React ve Next.js kütüphanelerini import ediyoruz 
+import { useEffect, useState } from "react";
 
 // Login sayfasına link vermek için kullanıyoruz
 import Link from "next/link";
@@ -15,6 +15,20 @@ export default function ForgotPasswordPage() {
 
   // Backend'den gelen mesajı ekranda göstermek için kullanılır
   const [message, setMessage] = useState("");
+
+// Şifre sıfırlama linkinin geçerlilik süresini göstermek için kullanılır
+  const [countdown, setCountdown] = useState(0);
+
+// countdown state'i değiştiğinde çalışacak useEffect
+useEffect(() => {
+  if (countdown <= 0) return;
+
+  const timer = setInterval(() => {
+    setCountdown((prev) => prev - 1);
+  }, 1000);
+
+  return () => clearInterval(timer);
+}, [countdown]);
 
   // Form gönderilince çalışacak fonksiyon
   const handleForgotPassword = async (e: React.FormEvent) => {
@@ -46,10 +60,13 @@ export default function ForgotPasswordPage() {
       // Backend'den gelen mesajı ekranda gösteriyoruz
       setMessage(data.message);
 
-      // İşlem başarılıysa email inputunu temizliyoruz
+      // Eğer backend başarılı bir şekilde link gönderdi ise email state'ini temizliyoruz
       if (data.success) {
-        setEmail("");
-      }
+  setEmail("");
+
+  // Reset linki 2 dakika geçerli olduğu için ekranda 120 saniyelik geri sayım başlatıyoruz
+  setCountdown(120);
+}
     } catch (error) {
       setMessage("Bir hata oluştu. Backend çalışıyor mu kontrol edin.");
     }
@@ -110,6 +127,23 @@ export default function ForgotPasswordPage() {
           </button>
 
           {message && <p style={styles.message}>{message}</p>}
+          {countdown > 0 && (         
+            <div style={styles.countdownBox}>
+              <p style={styles.countdownText}>Reset linkinin kalan süresi</p>
+
+              <p style={styles.countdownTime}>
+                {String(Math.floor(countdown / 60)).padStart(2, "0")}:
+                {String(countdown % 60).padStart(2, "0")}
+              </p>
+          </div>
+        )}
+
+{countdown === 0 && message && (
+  <p style={styles.expireText}>
+    Süre dolduysa yeni bir şifre sıfırlama bağlantısı isteyebilirsin.
+  </p>
+)}
+
 
           <p style={styles.linkText}>
             Şifreni hatırladın mı?{" "}
@@ -308,4 +342,39 @@ const styles = {
     textDecoration: "none",
     fontWeight: "800",
   },
+
+countdownBox: {
+  marginTop: "10px",
+  padding: "14px",
+  borderRadius: "12px",
+  backgroundColor: "rgba(120, 84, 48, 0.10)",
+  border: "1px solid rgba(139, 93, 47, 0.22)",
+  textAlign: "center" as const,
+},
+
+countdownText: {
+  margin: "0 0 6px 0",
+  color: "#6a4a31",
+  fontSize: "14px",
+  fontWeight: "700",
+},
+
+countdownTime: {
+  margin: 0,
+  color: "#4a2f1d",
+  fontSize: "32px",
+  fontWeight: "900",
+  fontFamily: "Georgia, 'Times New Roman', serif",
+},
+
+expireText: {
+  margin: "8px 0 0 0",
+  color: "#7a2e1f",
+  fontSize: "14px",
+  fontWeight: "700",
+  textAlign: "center" as const,
+},
+
+
+
 };
