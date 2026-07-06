@@ -73,6 +73,9 @@ export default function DashboardPage() {
   // Hata veya bilgi mesajı göstermek için kullanılır
   const [message, setMessage] = useState("");
 
+  // Ekran küçük mü büyük mü bunu kontrol etmek için kullanıyoruz
+const [isMobile, setIsMobile] = useState(false);
+
   // Kitap ekleme pop-up açık mı kapalı mı bunu tutar
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -167,6 +170,26 @@ export default function DashboardPage() {
       setMonthlyGoal(savedGoal);
     }
   }, [router]);
+
+
+ // Ekran boyutu değiştiğinde mobil görünüm gerekli mi kontrol ediyoruz
+useEffect(() => {
+  const checkScreenSize = () => {
+    const screenWidth = document.documentElement.clientWidth;
+
+    console.log("Ekran genişliği:", screenWidth);
+
+    setIsMobile(screenWidth <= 900);
+  };
+
+  checkScreenSize();
+
+  window.addEventListener("resize", checkScreenSize);
+
+  return () => {
+    window.removeEventListener("resize", checkScreenSize);
+  };
+}, []);
 
   // Çıkış yapma işlemi
   const handleLogout = () => {
@@ -352,13 +375,23 @@ export default function DashboardPage() {
   return (
     <main style={styles.container}>
       {/* Üst alan */}
-      <header style={styles.header}>
+      <header
+  style={{
+    ...styles.header,
+    ...(isMobile ? styles.headerMobile : {}),
+  }}
+>
         <div>
           <p style={styles.smallText}>Kitap Kulübü</p>
           <h1 style={styles.logoTitle}>Okuma Paneli</h1>
         </div>
 
-        <div style={styles.topRightArea}>
+        <div
+  style={{
+    ...styles.topRightArea,
+    ...(isMobile ? styles.topRightAreaMobile : {}),
+  }}
+>
           <div style={styles.userMiniCard}>
             <p style={styles.userMiniLabel}>Üye Bilgileri</p>
 
@@ -382,7 +415,12 @@ export default function DashboardPage() {
       </header>
 
       {/* Ana dashboard alanı */}
-      <section style={styles.dashboardArea}>
+      <section
+             style={{
+                ...styles.dashboardArea,
+               ...(isMobile ? styles.dashboardAreaMobile : {}),
+                      }}
+                    >
         {/* Sol kitaplık alanı */}
         <div style={styles.libraryArea}>
           <div style={styles.libraryHeader}>
@@ -391,17 +429,31 @@ export default function DashboardPage() {
               <h2 style={styles.libraryTitle}>Okuma Rafım</h2>
             </div>
 
-            <div style={styles.libraryButtons}>
-              <button onClick={openModal} style={styles.addBookButton}>
-                Kitap Ekle
-              </button>
-
+           <div
+  style={{
+    ...styles.libraryButtons,
+    ...(isMobile ? styles.libraryButtonsMobile : {}),
+  }}
+>
               <button
-                onClick={handleRemoveLastBook}
-                style={styles.removeBookButton}
-              >
-                Son Kitabı Çıkar
-              </button>
+  onClick={openModal}
+  style={{
+    ...styles.addBookButton,
+    ...(isMobile ? styles.actionButtonMobile : {}),
+  }}
+>
+  Kitap Ekle
+</button>
+
+             <button
+  onClick={handleRemoveLastBook}
+  style={{
+    ...styles.removeBookButton,
+    ...(isMobile ? styles.actionButtonMobile : {}),
+  }}
+>
+  Son Kitabı Çıkar
+</button>
             </div>
           </div>
 
@@ -730,6 +782,12 @@ const styles = {
     gap: "24px",
   },
 
+headerMobile: {
+  flexDirection: "column" as const,
+  alignItems: "flex-start",
+  gap: "18px",
+},
+
   smallText: {
     margin: "0 0 6px 0",
     color: "#d7b98e",
@@ -752,6 +810,11 @@ const styles = {
     display: "flex",
     alignItems: "stretch",
     gap: "14px",
+},
+
+topRightAreaMobile: {
+  width: "100%",
+  flexDirection: "column" as const,
 },
 
  userMiniCard: {
@@ -820,6 +883,11 @@ const styles = {
     paddingTop: "24px",
   },
 
+dashboardAreaMobile: {
+  gridTemplateColumns: "1fr",
+  gap: "18px",
+},
+
   libraryArea: {
     padding: "28px",
     borderRadius: "18px",
@@ -859,6 +927,16 @@ const styles = {
     flexDirection: "column" as const,
     gap: "10px",
   },
+
+libraryButtonsMobile: {
+  width: "100%",
+  flexDirection: "column" as const,
+},
+
+actionButtonMobile: {
+  width: "100%",
+},
+
 
   addBookButton: {
     padding: "11px 16px",
