@@ -44,3 +44,62 @@ body {
   color: #6b7280;
   opacity: 1;
 }
+
+/* Sayfadaki genel scrollbar görünümü */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #8a6238 #2f1a0d;
+}
+
+/* Chrome, Edge, Opera için scrollbar genişliği */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+/* Scrollbar arka planı */
+*::-webkit-scrollbar-track {
+  background: #2f1a0d;
+  border-radius: 999px;
+}
+
+/* Scrollbar tutma yeri */
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #b98a57, #8a6238);
+  border-radius: 999px;
+  border: 2px solid #2f1a0d;
+}
+
+/* Scrollbar üzerine gelince */
+*::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #d0a66f, #9b7447);
+}
+
+/* Sadece Son Yorumlar panelindeki scrollbar */
+.comment-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #b98a57 rgba(120, 84, 48, 0.12);
+}
+
+/* Chrome, Edge, Opera için */
+.comment-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+/* Scrollbar arka planı */
+.comment-scroll::-webkit-scrollbar-track {
+  background: rgba(120, 84, 48, 0.10);
+  border-radius: 999px;
+}
+
+/* Scrollbar tutma yeri */
+.comment-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #c9a46f, #9b7447);
+  border-radius: 999px;
+  border: 2px solid rgba(238, 221, 185, 0.95);
+}
+
+/* Üzerine gelince */
+.comment-scroll::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #d8b982, #a77a4a);
+}

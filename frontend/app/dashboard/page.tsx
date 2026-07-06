@@ -79,6 +79,9 @@ export default function DashboardPage() {
   // Kitabın üzerine gelince önizleme göstermek için kullanılır
   const [hoveredBook, setHoveredBook] = useState<Book | null>(null);
 
+  // Düzenleme modunda hangi kitabın düzenlendiğini tutar
+  const [editingBookIndex, setEditingBookIndex] = useState<number | null>(null);
+
   // Aylık okuma hedefini tutar
   const [monthlyGoal, setMonthlyGoal] = useState("4");
 
@@ -174,6 +177,23 @@ export default function DashboardPage() {
   // Kitap ekleme pop-up'ını açar
   const openModal = () => {
     setMessage("");
+    setEditingBookIndex(null);
+    setIsModalOpen(true);
+  };
+
+  // Kitap düzenleme pop-up'ını açar ve formu doldurur
+  const openEditModal = (book: Book, index: number) => {
+    setMessage("");
+
+    setEditingBookIndex(index);
+
+    setTitle(book.title);
+    setAuthor(book.author);
+    setRating(book.rating);
+    setComment(book.comment);
+    setSelectedStatus(book.status);
+    setSelectedMonth(String(book.month));
+
     setIsModalOpen(true);
   };
 
@@ -181,13 +201,13 @@ export default function DashboardPage() {
   const closeModal = () => {
     setIsModalOpen(false);
 
-    // Pop-up kapanınca formu temizliyoruz
     setTitle("");
     setAuthor("");
     setRating("");
     setComment("");
     setSelectedStatus("okunacak");
     setSelectedMonth(String(new Date().getMonth()));
+    setEditingBookIndex(null);
   };
 
   // Kitap ekleme işlemi
@@ -199,7 +219,7 @@ export default function DashboardPage() {
       return;
     }
 
-    const newBook: Book = {
+    const bookData: Book = {
       title,
       author,
       rating,
@@ -208,13 +228,24 @@ export default function DashboardPage() {
       month: Number(selectedMonth),
     };
 
-    const updatedBooks = [...books, newBook];
+    let updatedBooks: Book[];
+
+    if (editingBookIndex !== null) {
+      updatedBooks = books.map((book, index) =>
+        index === editingBookIndex ? bookData : book
+      );
+
+      setMessage("Kitap bilgileri başarıyla güncellendi.");
+    } else {
+      updatedBooks = [...books, bookData];
+
+      setMessage("Kitap başarıyla kitaplığa eklendi.");
+    }
 
     setBooks(updatedBooks);
     localStorage.setItem("books", JSON.stringify(updatedBooks));
 
     closeModal();
-    setMessage("Kitap başarıyla kitaplığa eklendi.");
   };
 
   // Son eklenen kitabı kitaplıktan çıkarır
@@ -417,38 +448,78 @@ export default function DashboardPage() {
 
                 <div style={styles.shelfBoard}>
                   <div style={styles.shelfBooksScroller}>
-                    {group.items.length > 0 ? (
-                      group.items.map((book, index) => (
-                        <div
-                          key={`${group.monthIndex}-${index}-${book.title}`}
-                          style={{
-                            ...styles.bookSpine,
-                            backgroundColor:
-                              bookColors[
-                                (group.monthIndex + index) % bookColors.length
-                              ],
-                          }}
-                          onMouseEnter={() => setHoveredBook(book)}
-                          onMouseLeave={() => setHoveredBook(null)}
-                          title={`${book.title} - ${book.author} - ${
-                            statusLabels[book.status]
-                          }`}
-                        >
-                          <span
-                            style={{
-                              ...styles.bookStatusMark,
-                              backgroundColor: statusColors[book.status],
-                            }}
-                          ></span>
+                   
+  {group.items.length > 0 ? (
+  group.items.map((book, index) => {
+    const realBookIndex = books.findIndex(
+      (item) =>
+        item.title === book.title &&
+        item.author === book.author &&
+        item.month === book.month &&
+        item.status === book.status
+    );
 
-                          <span style={styles.bookTitle}>{book.title}</span>
-                        </div>
-                      ))
-                    ) : (
-                      <div style={styles.emptyMonthText}>
-                        Bu ay için kitap eklenmedi.
-                      </div>
-                    )}
+    // Kitabın üzerine gelince tooltip göstermek için
+    return (
+     <div
+  key={`${group.monthIndex}-${index}-${book.title}`}
+  style={{
+    ...styles.bookSpine,
+    backgroundColor:
+      bookColors[(group.monthIndex + index) % bookColors.length],
+  }}
+  onClick={() => router.push(`/book-preview/${realBookIndex}`)}
+>
+        <span
+          style={{
+            ...styles.bookStatusMark,
+            backgroundColor: statusColors[book.status],
+          }}
+        ></span>
+
+        <span style={styles.bookTitle}>{book.title}</span>
+
+        {hoveredBook === book && (
+          <div style={styles.bookTooltip}>
+            <p style={styles.tooltipLabel}>Kitap Önizleme</p>
+
+            <h3 style={styles.tooltipTitle}>{book.title}</h3>
+
+            <p style={styles.tooltipText}>
+              <strong>Yazar:</strong> {book.author}
+            </p>
+
+            <p style={styles.tooltipText}>
+              <strong>Durum:</strong> {statusLabels[book.status]}
+            </p>
+
+            <p style={styles.tooltipStars}>
+              {"★".repeat(Number(book.rating) || 0)}
+              {"☆".repeat(5 - (Number(book.rating) || 0))}
+            </p>
+
+            {book.comment && (
+              <p style={styles.tooltipComment}>{book.comment}</p>
+            )}
+
+            <button
+              type="button"
+              style={styles.tooltipEditButton}
+              onClick={(e) => {
+                e.stopPropagation();
+                openEditModal(book, realBookIndex);
+              }}
+            >
+              Düzenle
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  })
+) : (
+  <div style={styles.emptyMonthText}>Bu ay için kitap eklenmedi.</div>
+)}
                   </div>
 
                   <div style={styles.shelfWood}></div>
@@ -457,26 +528,7 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          {/* Kitap üzerine gelince çıkan önizleme alanı */}
-          {hoveredBook && (
-            <div style={styles.bookPreview}>
-              <p style={styles.previewLabel}>Kitap Önizleme</p>
-
-              <h3 style={styles.previewTitle}>{hoveredBook.title}</h3>
-
-              <p style={styles.previewAuthor}>{hoveredBook.author}</p>
-
-              <p style={styles.previewStatus}>
-                Durum: {statusLabels[hoveredBook.status]}
-              </p>
-
-              <p style={styles.previewStars}>
-                {"★".repeat(Number(hoveredBook.rating) || 0)}
-                {"☆".repeat(5 - (Number(hoveredBook.rating) || 0))}
-              </p>
-            </div>
-          )}
-
+          
           {message && <p style={styles.message}>{message}</p>}
         </div>
 
@@ -495,7 +547,9 @@ export default function DashboardPage() {
             </p>
 
             <div style={styles.goalNumbers}>
-              <span style={styles.readCount}>{currentMonthReadBooks.length}</span>
+              <span style={styles.readCount}>
+                {currentMonthReadBooks.length}
+              </span>
 
               <span style={styles.goalSlash}>/</span>
 
@@ -533,7 +587,7 @@ export default function DashboardPage() {
               takip edebilirsin.
             </p>
 
-            <div style={styles.commentList}>
+            <div className="comment-scroll" style={styles.commentList}>
               {communityComments.map((commentItem, index) => (
                 <div key={index} style={styles.commentCard}>
                   <div style={styles.commentHeader}>
@@ -567,7 +621,9 @@ export default function DashboardPage() {
 
             <p style={styles.modalLabel}>Kitap Kulübü</p>
 
-            <h2 style={styles.modalTitle}>Yeni Kitap Ekle</h2>
+            <h2 style={styles.modalTitle}>
+  {editingBookIndex !== null ? "Kitabı Düzenle" : "Yeni Kitap Ekle"}
+            </h2>
 
             <p style={styles.modalDescription}>
               Kitap bilgilerini gir, okuma durumunu seç ve kitabı rafına ekle.
@@ -637,7 +693,7 @@ export default function DashboardPage() {
             />
 
             <button style={styles.modalButton} type="submit">
-              Kitabı Rafıma Ekle
+        {editingBookIndex !== null ? "Kitabı Güncelle" : "Kitabı Rafıma Ekle"}
             </button>
 
             <button type="button" onClick={closeModal} style={styles.backButton}>
@@ -692,22 +748,26 @@ const styles = {
     textShadow: "0 4px 18px rgba(0,0,0,0.55)",
   },
 
-  topRightArea: {
+ topRightArea: {
     display: "flex",
-    alignItems: "center",
+    alignItems: "stretch",
     gap: "14px",
-  },
+},
 
-  userMiniCard: {
-    minWidth: "250px",
-    padding: "13px 16px",
-    borderRadius: "12px",
-    color: "#3f2b1d",
-    background:
-      "linear-gradient(135deg, rgba(238, 221, 185, 0.94) 0%, rgba(248, 236, 207, 0.94) 100%)",
-    border: "1px solid rgba(151, 105, 55, 0.65)",
-    boxShadow: "0 12px 30px rgba(0,0,0,0.32)",
-  },
+ userMiniCard: {
+  minWidth: "260px",
+  minHeight: "72px",
+  padding: "12px 16px",
+  borderRadius: "12px",
+  color: "#3f2b1d",
+  background:
+    "linear-gradient(135deg, rgba(238, 221, 185, 0.94) 0%, rgba(248, 236, 207, 0.94) 100%)",
+  border: "1px solid rgba(151, 105, 55, 0.65)",
+  boxShadow: "0 12px 30px rgba(0,0,0,0.32)",
+  display: "flex",
+  flexDirection: "column" as const,
+  justifyContent: "center",
+},
 
   userMiniLabel: {
     margin: "0 0 4px 0",
@@ -732,18 +792,22 @@ const styles = {
     fontSize: "13px",
   },
 
-  logoutButton: {
-    padding: "12px 20px",
-    borderRadius: "10px",
-    border: "1px solid rgba(246, 230, 200, 0.55)",
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
-    color: "#f6e6c8",
-    fontSize: "15px",
-    fontWeight: "800",
-    cursor: "pointer",
-    backdropFilter: "blur(8px)",
-    boxShadow: "0 8px 20px rgba(0,0,0,0.22)",
-  },
+ logoutButton: {
+  minHeight: "72px",
+  padding: "0 24px",
+  borderRadius: "12px",
+  border: "1px solid rgba(246, 230, 200, 0.55)",
+  backgroundColor: "rgba(255, 255, 255, 0.08)",
+  color: "#f6e6c8",
+  fontSize: "15px",
+  fontWeight: "800",
+  cursor: "pointer",
+  backdropFilter: "blur(8px)",
+  boxShadow: "0 8px 20px rgba(0,0,0,0.22)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+},
 
   dashboardArea: {
     maxWidth: "1240px",
@@ -885,8 +949,8 @@ const styles = {
     alignItems: "flex-end",
     gap: "9px",
     overflowX: "auto" as const,
-    overflowY: "hidden" as const,
-    padding: "16px 10px 8px 10px",
+    overflowY: "visible" as const,
+    padding: "50px 10px 8px 10px",
     whiteSpace: "nowrap" as const,
   },
 
@@ -938,57 +1002,75 @@ const styles = {
     overflow: "hidden",
   },
 
-  emptyMonthText: {
-    color: "rgba(246, 230, 200, 0.72)",
-    fontSize: "14px",
-    padding: "18px 8px",
-    fontStyle: "italic",
+    bookTooltip: {
+    position: "absolute" as const,
+    bottom: "165px",
+    left: "50%",
+    transform: "translateX(-50%)",
+    width: "230px",
+    padding: "14px",
+    borderRadius: "12px",
+    backgroundColor: "rgba(246, 230, 200, 0.98)",
+    color: "#3f2b1d",
+    boxShadow: "0 14px 34px rgba(0,0,0,0.42)",
+    border: "1px solid rgba(151, 105, 55, 0.65)",
+    zIndex: 50,
+    whiteSpace: "normal" as const,
   },
 
-  bookPreview: {
-    marginTop: "16px",
-    padding: "16px",
-    borderRadius: "14px",
-    backgroundColor: "rgba(246, 230, 200, 0.12)",
-    border: "1px solid rgba(246, 230, 200, 0.22)",
-    color: "#f6e6c8",
-    boxShadow: "inset 0 0 16px rgba(0,0,0,0.18)",
-  },
-
-  previewLabel: {
+  tooltipLabel: {
     margin: "0 0 6px 0",
-    color: "#d7b98e",
-    fontSize: "12px",
+    color: "#8b5d2f",
+    fontSize: "11px",
     fontWeight: "800",
     letterSpacing: "2px",
     textTransform: "uppercase" as const,
   },
 
-  previewTitle: {
-    margin: "0 0 4px 0",
-    color: "#fff4dc",
+  tooltipTitle: {
+    margin: "0 0 8px 0",
+    color: "#4a2f1d",
     fontFamily: "Georgia, 'Times New Roman', serif",
-    fontSize: "22px",
+    fontSize: "18px",
   },
 
-  previewAuthor: {
+  tooltipText: {
     margin: "0 0 6px 0",
-    color: "#e5caa2",
-    fontSize: "14px",
+    color: "#5f4028",
+    fontSize: "13px",
   },
 
-  previewStatus: {
-    margin: "0 0 6px 0",
-    color: "#f6e6c8",
-    fontSize: "14px",
-    fontWeight: "700",
+  tooltipStars: {
+    margin: "0 0 8px 0",
+    color: "#9b7447",
+    fontSize: "17px",
+    letterSpacing: "1px",
   },
 
-  previewStars: {
-    margin: 0,
-    color: "#d7b98e",
-    fontSize: "20px",
-    letterSpacing: "2px",
+  tooltipComment: {
+    margin: "0 0 10px 0",
+    color: "#5f4028",
+    fontSize: "13px",
+    lineHeight: "1.5",
+  },
+
+  tooltipEditButton: {
+    width: "100%",
+    padding: "8px",
+    borderRadius: "8px",
+    border: "none",
+    backgroundColor: "#8a6238",
+    color: "white",
+    fontSize: "13px",
+    fontWeight: "800",
+    cursor: "pointer",
+  },
+
+  emptyMonthText: {
+    color: "rgba(246, 230, 200, 0.72)",
+    fontSize: "14px",
+    padding: "18px 8px",
+    fontStyle: "italic",
   },
 
   message: {
@@ -1296,5 +1378,82 @@ const styles = {
     fontSize: "15px",
     cursor: "pointer",
     fontWeight: "800",
+  
+  bookTooltip: {
+  position: "absolute" as const,
+  bottom: "calc(100% + 16px)",
+  left: "50%",
+  transform: "translateX(-50%)",
+  width: "240px",
+  padding: "16px",
+  borderRadius: "14px",
+  background:
+    "linear-gradient(135deg, rgba(238, 221, 185, 0.98) 0%, rgba(248, 236, 207, 0.98) 48%, rgba(218, 194, 151, 0.98) 100%)",
+  border: "1px solid rgba(151, 105, 55, 0.75)",
+  boxShadow:
+    "0 18px 42px rgba(0,0,0,0.50), inset 0 0 18px rgba(120, 84, 48, 0.12)",
+  color: "#3f2b1d",
+  pointerEvents: "auto" as const,
+  zIndex: 999,
+},
+
+tooltipLabel: {
+  margin: "0 0 8px 0",
+  color: "#8b5d2f",
+  fontSize: "11px",
+  fontWeight: "900",
+  letterSpacing: "2px",
+  textTransform: "uppercase" as const,
+},
+
+tooltipTitle: {
+  margin: "0 0 8px 0",
+  color: "#4a2f1d",
+  fontFamily: "Georgia, 'Times New Roman', serif",
+  fontSize: "20px",
+  lineHeight: "1.2",
+},
+
+tooltipText: {
+  margin: "0 0 6px 0",
+  color: "#5f4028",
+  fontSize: "14px",
+  lineHeight: "1.5",
+},
+
+tooltipStars: {
+  margin: "8px 0",
+  color: "#9b7447",
+  fontSize: "19px",
+  letterSpacing: "1px",
+},
+
+tooltipComment: {
+  margin: "8px 0 12px 0",
+  padding: "10px",
+  borderRadius: "8px",
+  backgroundColor: "rgba(120, 84, 48, 0.10)",
+  color: "#6a4a31",
+  fontSize: "13px",
+  lineHeight: "1.5",
+  fontStyle: "italic",
+},
+
+tooltipEditButton: {
+  width: "100%",
+  padding: "10px",
+  borderRadius: "8px",
+  border: "none",
+  backgroundColor: "#8a6238",
+  color: "white",
+  fontSize: "13px",
+  fontWeight: "800",
+  cursor: "pointer",
+  boxShadow: "0 6px 14px rgba(70, 40, 15, 0.22)",
+},
+  
+  
+  
+  
   },
 };
